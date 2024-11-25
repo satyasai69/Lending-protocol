@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.10;
 
-import "../core/interface/ComptrollerInterface.sol";
-import "./CTokenInterfaces.sol";
-import "./ErrorReporter.sol";
-import "./EIP20Interface.sol";
-import "./InterestRateModel.sol";
-import "./ExponentialNoError.sol";
+import {ComptrollerInterface} from "../core/interface/ComptrollerInterface.sol";
+import {CTokenInterface, CTokenStorage,CErc20Interface,EIP20NonStandardInterface,ComptrollerInterface,CDelegateInterface} from "./interface/CTokenInterfaces.sol";
+import {TokenErrorReporter,ComptrollerErrorReporter} from  "../CustomError/ErrorReporter.sol";
+import {EIP20Interface} from  "./interface/EIP20Interface.sol";
+import {InterestRateModel} from  "../interestRate/InterestRateModel.sol";
+import {ExponentialNoError} from "../CustomError/ExponentialNoError.sol";
 
 /**
  * @title Compound's CToken Contract
