@@ -1,66 +1,149 @@
-## Foundry
+# Lending Protocol
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+A Compound-style lending protocol built with Solidity and Foundry, enabling users to supply assets and borrow against collateral.
 
-Foundry consists of:
+## Features
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+- Supply and borrow multiple assets (USDT, USDC)
+- Collateral management with configurable factors
+- Dynamic interest rate models
+- Protocol reserves for risk management
+- Price oracle integration for accurate valuations
+- Governance timelock for protocol upgrades
 
-## Documentation
+## Architecture
 
-https://book.getfoundry.sh/
+The protocol consists of several key components:
 
-## Usage
+### Core Contracts
 
-### Build
+1. **Comptroller**: 
+   - Manages markets and collateral factors
+   - Tracks user positions
+   - Handles liquidation thresholds
+   - Controls protocol parameters
 
-```shell
-$ forge build
+2. **CToken (CErc20)**:
+   - Represents supplied assets (e.g., cUSDT, cUSDC)
+   - Handles interest accrual
+   - Manages token supply and borrows
+   - Maintains protocol reserves
+
+3. **PriceOracle**:
+   - Provides asset prices
+   - Used for collateral calculations
+   - Ensures accurate liquidation thresholds
+
+4. **Timelock**:
+   - Handles governance actions
+   - Manages protocol upgrades
+   - Controls parameter changes
+
+### Example Usage
+
+```solidity
+// 1. Supply USDT as collateral
+IERC20(USDT).approve(cUSDT_address, amount);
+CErc20Interface(cUSDT).mint(amount);
+
+// 2. Enable asset as collateral
+address[] memory markets = new address[](1);
+markets[0] = cUSDT_address;
+comptroller.enterMarkets(markets);
+
+// 3. Borrow USDC
+CErc20Interface(cUSDC).borrow(borrowAmount);
+
+// 4. Repay borrowed USDC
+IERC20(USDC).approve(cUSDC_address, repayAmount);
+CErc20Interface(cUSDC).repayBorrow(repayAmount);
+
+// 5. Withdraw supplied USDT
+CErc20Interface(cUSDT).redeem(redeemTokens);
 ```
 
-### Test
+## Testing
 
-```shell
-$ forge test
+The protocol includes comprehensive tests using Foundry. Here's an example test:
+
+```solidity
+contract ComptrollerTest is Test {
+    function testSupplyAndBorrow() public {
+        // Setup
+        usdt.mint(user, 10 ether);
+        vm.startPrank(user);
+        
+        // Supply USDT
+        usdt.approve(address(delegator), 10 ether);
+        delegator.mint(10 ether);
+        
+        // Enter market
+        address[] memory markets = new address[](1);
+        markets[0] = address(delegator);
+        comptroller.enterMarkets(markets);
+        
+        // Borrow USDC
+        uint256 borrowAmount = 5 ether;
+        delegatorusdc.borrow(borrowAmount);
+        
+        // Verify borrow
+        assertEq(
+            CErc20Interface(address(delegatorusdc))
+                .borrowBalanceStored(user),
+            borrowAmount
+        );
+    }
+}
 ```
 
-### Format
+## Setup
 
-```shell
-$ forge fmt
+1. Install Foundry:
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
 ```
 
-### Gas Snapshots
-
-```shell
-$ forge snapshot
+2. Clone the repository:
+```bash
+git clone <repository-url>
+cd lending-protocol
 ```
 
-### Anvil
-
-```shell
-$ anvil
+3. Install dependencies:
+```bash
+forge install
 ```
 
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+4. Run tests:
+```bash
+forge test
 ```
 
-### Cast
+## Key Protocol Parameters
 
-```shell
-$ cast <subcommand>
-```
+- **Collateral Factor**: Determines how much you can borrow against your collateral
+- **Reserve Factor**: Portion of interest that goes to protocol reserves
+- **Interest Rate Model**: Dynamic rates based on utilization
+- **Liquidation Threshold**: When accounts become eligible for liquidation
+- **Close Factor**: Maximum portion that can be liquidated at once
 
-### Help
+## Security Considerations
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+- All functions that modify state have access control
+- Reentrancy protection on critical functions
+- Price oracle manipulation protection
+- Proper decimal handling for token math
+- Protocol reserves for risk management
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request
+
+## License
+
+MIT
